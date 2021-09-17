@@ -23,7 +23,7 @@ class Validation {
 
         if (typeof param !== 'number' ||
             !isFinite(param) ||
-            param < 1 ||
+            param < 0 ||
             param % 1 !== 0) {
             return false
         }

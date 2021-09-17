@@ -14,12 +14,31 @@ app.init = async () => {
     });
 
     // LOGIC BELOW
-    // let createAccount = await Account.create();
-    // console.log(createAccount);
-
-
-    let createUser = await User.create();
+    //kuriam vartotoja:
+    let createUser = await User.create(conn, 'Džinas', 'Vežlys');
     console.log(createUser);
+
+    createUser = await User.create(conn, 'Ponas', 'Šėtonas');
+    console.log(createUser);
+
+    createUser = await User.create(conn, 'Aiškeregė', 'Baba');
+    console.log(createUser);
+
+    createUser = await User.create(conn, 'Nelabasis', 'Jautis');
+    console.log(createUser);
+
+    createUser = await User.create(conn, 'Bulma', 'Brif');
+    console.log(createUser);
+    //kuriam nauja saskaita
+    let createAccount = await Account.create(conn, 1000, 5);
+    console.log(createAccount);
+
+    //idedama pinigu i saskaita
+    let addMoney = await Account.addMoneyToAccountByID(conn, 3, 565);
+    console.log(addMoney);
+    //isimam pinigu is saskaitos
+    let removeMoney = await Account.removeMoneyFromAccountByID(conn, 3, 65);
+    console.log(removeMoney);
 }
 
 app.init();

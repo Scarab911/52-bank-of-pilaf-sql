@@ -45,7 +45,6 @@ db.createTableUsers = async (connection) => {
                         `id` int(10) NOT NULL AUTO_INCREMENT,\
                         `firstname` char(20) COLLATE utf8_swedish_ci NOT NULL,\
                         `lastname` char(20) COLLATE utf8_swedish_ci NOT NULL,\
-                        `account` int(10) NOT NULL,\
                         PRIMARY KEY(`id`)\
                     ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci';
         await connection.execute(sql);
