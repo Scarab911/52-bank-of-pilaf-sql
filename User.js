@@ -38,7 +38,49 @@ User.create = async (connection, userFirstname, userLastname) => {
     return response;
 };
 
+/**
+ * Vartotojo irasymas i duombaze.
+ * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
+ * @param {number} userId Autoriaus vardas.
+ * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
+ */
 User.delete = async (connection, userId) => {
-    return `Viso gero vartotojau!`
+    //surandam savininka ir jo visus account pagal duota id
+    const sql = 'SELECT \
+                    `firstname`,\
+                    `lastname`,\
+                    `accounts`.`balance`,\
+                    `accounts`.`id`as accountId\
+                FROM `users`\
+                LEFT JOIN `accounts`\
+                    ON `accounts`.`owners_id` = `users`.`id`\
+                WHERE `users`.`id` =' + userId;
+
+    let [rows] = await connection.execute(sql);
+    const firstname = rows[0].firstname;
+    const lastname = rows[0].lastname;
+    //patikrinam ar vartotojo saskaitose yra pinigu:
+
+    // const suma = rows.reduce((total, row) => total + row.balance, 0); //patikra sumuojant su REDUCE
+    //patikra su metodu SOME:
+
+    if (rows.some(row => row.balance > 0)) {
+        return `Paskyros istrinti negalima, saskaitose yra pinigu!`
+    }
+
+    //trinam saskaitas:
+    for (let i = 0; i < rows.length; i++) {
+        let account = rows[i];
+
+        const status = await Account.deleteAccountById(connection, account.accountId)
+    }
+    //pasalinam vartotoja:
+    let sql2 = 'DELETE\
+                FROM `users`\
+                WHERE `users`.`id` =' + userId;
+    [rows] = await connection.execute(sql2);
+
+
+    return `Vartotojas ${firstname} ${lastname} sekmingai pasalintas is sistemos!`
 }
 module.exports = User;

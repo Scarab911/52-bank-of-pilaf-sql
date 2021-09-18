@@ -57,14 +57,26 @@ Account.addMoneyToAccountByID = async (connection, accountId, cash) => {
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 Account.removeMoneyFromAccountByID = async (connection, accountId, cash) => {
+    const sql = 'SELECT \
+                    `balance`\
+                FROM `accounts`\
+                WHERE `accounts`.`id` =' + accountId;
 
-    let sql = 'UPDATE `accounts`\
+    let [rows] = await connection.execute(sql);
+
+    if (rows.some(row => row.balance < cash)) {
+        console.log(`Nepakanka lesu saskaitoje!`);
+        return false
+    }
+
+    const sql2 = 'UPDATE `accounts`\
                  SET `balance` = `balance` -"'+ cash + '"\
                   WHERE `accounts`.`id` ='+ accountId;
 
-    const [rows] = await connection.execute(sql);
+    [rows] = await connection.execute(sql2);
+    console.log(`${cash} pinigu buvo sekmingai isimti/pervesti`);
 
-    return `${cash} pinigu buvo sekmingai isimti/pervesti`;
+    return true;
 }
 
 /**
@@ -125,21 +137,22 @@ Account.cashOutMoneyFromUserAccountById = async (connection, accountID, cash) =>
 /**
  * Atliekam pinigu pervedima is norodytos saskaitos NR(ID) ik kita nurodyta saskaitos NR(ID).
  * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
- * @param {number} accountID vartotojo saskaitos NR.
+ * @param {number} withdrawFromId saskaitos numeris is kurio siunciama.
+ * @param {number} transferToId saskaitos numeris i kuri siunciama.
  * @param {number} cash pinigu suma.
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferToId, cash) => {
 
-    //1perskaitom esama saskaita
-    //2isimam norima pinigu kieki is saskaitos
     const removal = await Account.removeMoneyFromAccountByID(connection, withdrawFromId, cash);
 
-    //3nuskaitom galutine saskaita
-    //4pridedam prie galutines saskaitos'
-    const addition = await Account.addMoneyToAccountByID(connection, transferToId, cash)
+    if (!removal) {
+        console.log(`Pinigu pervesti negalima!`);
+        return false
 
-    return `${removal}\n${addition}`;
+    }
+    const addition = await Account.addMoneyToAccountByID(connection, transferToId, cash);
+    return addition
 }
 
 /**
@@ -154,18 +167,20 @@ Account.deleteAccountById = async (connection, accountId) => {
                 FROM `accounts`\
                 WHERE `accounts`.`id` =' + accountId;
 
-    const [rows] = await connection.execute(sql);
+    let [rows] = await connection.execute(sql);
     const balance = rows[0].balance;
 
     if (balance !== 0) {
-        return `Saskaitos ${accountId} istrinti negalima, joje yra ${balance} pinigu!`
+        console.log(`Saskaitos ${accountId} istrinti negalima, joje yra ${balance} pinigu!`);
+        return false;
     } else {
-        const sql2 = '"DELETE\
-                     FROM `accounts`\
-                     WHERE `accounts`.`id` = '+ accountId + '"?'
+        const sql2 = 'DELETE\
+                        FROM `accounts`\
+                        WHERE `accounts`.`id` ='+ accountId;
+        [rows] = await connection.execute(sql2);
     }
-
-    return `Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`
+    console.log(`Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`)
+    return true
 }
 
 module.exports = Account;

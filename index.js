@@ -57,17 +57,21 @@ app.init = async () => {
 
     //pinigu pervedimas is vienos saskaitos i kita
     console.log('');
-    let moneyTransfer = await Account.moneyTransferByAccountId(conn, 3, 1, 165);
+    let moneyTransfer = await Account.moneyTransferByAccountId(conn, 6, 5, 300);
     console.log(moneyTransfer);
 
-    //trinam accounta
-    console.log('');
-    let removeAccount = await Account.deleteAccountById(conn, 2);
-    console.log(removeAccount);
+    // //trinam accounta
+    // console.log('');
+    // let removeAccount = await Account.deleteAccountById(conn, 2);
+    // console.log(removeAccount);
 
     //trinam vartotoja
     console.log('');
     let removeUser = await User.delete(conn, 2);
+    console.log(removeUser);
+
+    console.log('');
+    removeUser = await User.delete(conn, 4);
     console.log(removeUser);
 
 }
