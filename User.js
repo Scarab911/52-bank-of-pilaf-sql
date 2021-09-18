@@ -38,5 +38,7 @@ User.create = async (connection, userFirstname, userLastname) => {
     return response;
 };
 
-
+User.delete = async (connection, userId) => {
+    return `Viso gero vartotojau!`
+}
 module.exports = User;

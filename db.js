@@ -61,14 +61,19 @@ db.createTableAccounts = async (connection) => {
                         `id` int(10) NOT NULL AUTO_INCREMENT,\
                         `balance` int(10) NOT NULL,\
                         `owners_id` int(10) NOT NULL,\
-                        PRIMARY KEY(`id`)\
+                    PRIMARY KEY(`id`),\
+                    KEY `owners_id` (`owners_id`)\
                     ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci';
         await connection.execute(sql);
+        // uzdedam apsauga nuo istrynimo
+        const sql2 = 'ALTER TABLE `accounts` ADD FOREIGN KEY (`owners_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
+        await connection.execute(sql2);
     } catch (error) {
         console.log('Nepavyko sukurti autoriu lenteles');
         console.log(error);
         return error;
     }
+
 }
 
 //exportuojam faila

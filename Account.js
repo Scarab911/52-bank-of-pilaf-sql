@@ -141,4 +141,31 @@ Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferTo
 
     return `${removal}\n${addition}`;
 }
+
+/**
+ * Pasalinam nurodyta saskaita is sistemos pagal ID.
+ * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
+ * @param {number} accountID vartotojo saskaitos NR.
+ * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
+ */
+Account.deleteAccountById = async (connection, accountId) => {
+    const sql = 'SELECT \
+                    `balance`\
+                FROM `accounts`\
+                WHERE `accounts`.`id` =' + accountId;
+
+    const [rows] = await connection.execute(sql);
+    const balance = rows[0].balance;
+
+    if (balance !== 0) {
+        return `Saskaitos ${accountId} istrinti negalima, joje yra ${balance} pinigu!`
+    } else {
+        const sql2 = '"DELETE\
+                     FROM `accounts`\
+                     WHERE `accounts`.`id` = '+ accountId + '"?'
+    }
+
+    return `Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`
+}
+
 module.exports = Account;
