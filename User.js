@@ -38,4 +38,5 @@ User.create = async (connection, userFirstname, userLastname) => {
     return response;
 };
 
+
 module.exports = User;
