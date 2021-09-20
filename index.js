@@ -37,13 +37,13 @@ app.init = async () => {
 
     //idedama pinigu i saskaita
     console.log('');
-    let addMoney = await Account.addMoneyToAccountByID(conn, 3, 565);
-    console.log(addMoney);
+    await Account.addMoneyToAccountByID(conn, 3, 565);
+
 
     //isimam pinigu is saskaitos
     console.log('');
-    let removeMoney = await Account.removeMoneyFromAccountByID(conn, 3, 65);
-    console.log(removeMoney);
+    await Account.removeMoneyFromAccountByID(conn, 3, 65);
+
 
     //vartotojas pagal id ideda pinigu i saskaita
     console.log('');
@@ -57,8 +57,8 @@ app.init = async () => {
 
     //pinigu pervedimas is vienos saskaitos i kita
     console.log('');
-    let moneyTransfer = await Account.moneyTransferByAccountId(conn, 6, 5, 300);
-    console.log(moneyTransfer);
+    await Account.moneyTransferByAccountId(conn, 6, 78, 325);
+
 
     // //trinam accounta
     // console.log('');

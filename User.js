@@ -45,6 +45,11 @@ User.create = async (connection, userFirstname, userLastname) => {
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 User.delete = async (connection, userId) => {
+    //VALIDATION
+    if (!Validation.IDisValid(userId)) {
+
+        return `ID turi buti teigiamas sveikasis skaicius!`;
+    }
     //surandam savininka ir jo visus account pagal duota id
     const sql = 'SELECT \
                     `firstname`,\

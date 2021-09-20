@@ -39,14 +39,34 @@ Account.create = async (connection, balance, userId) => {
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 Account.addMoneyToAccountByID = async (connection, accountId, cash) => {
+    //VALIDATION
+    if (!Validation.IDisValid(accountId)) {
 
-    let sql = 'UPDATE `accounts`\
+        return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
+    }
+    if (!Validation.isValidNumber(cash)) {
+
+        return `Parametras turi buti teigiamas sveikasis skaicius!`;
+    }
+    //LOGIC
+    //patikrinam ar egzistuoja toks saskaitos NR:
+    let sql = 'SELECT `id`\
+                FROM accounts';
+
+    let [rows] = await connection.execute(sql);
+
+    if (accountId > rows.length) {
+        console.log(`Klaida nurodant saskaitos numeri!`);
+        return false;
+    }
+    //pridedam pinigus i nurodyta saskaita
+    let sql2 = 'UPDATE `accounts`\
                  SET `balance` = `balance` +"'+ cash + '"\
                   WHERE `accounts`.`id` ='+ accountId;
 
-    const [rows] = await connection.execute(sql);
-
-    return `${cash} pinigu buvo sekmingai prideti i saskaita`;
+    [rows] = await connection.execute(sql2);
+    console.log(`${cash} pinigu buvo sekmingai prideti i saskaita`);
+    return true;
 }
 
 /**
@@ -57,6 +77,17 @@ Account.addMoneyToAccountByID = async (connection, accountId, cash) => {
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 Account.removeMoneyFromAccountByID = async (connection, accountId, cash) => {
+    //VALIDATION
+    if (!Validation.IDisValid(accountId)) {
+
+        return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
+    }
+    if (!Validation.isValidNumber(cash)) {
+
+        return `Parametras turi buti teigiamas sveikasis skaicius!`;
+    }
+    //LOGIC
+    //Patikrinam ar pakanka lesu:
     const sql = 'SELECT \
                     `balance`\
                 FROM `accounts`\
@@ -68,13 +99,13 @@ Account.removeMoneyFromAccountByID = async (connection, accountId, cash) => {
         console.log(`Nepakanka lesu saskaitoje!`);
         return false
     }
-
+    //Jei lesu pakanka atlieka pinigu isemima
     const sql2 = 'UPDATE `accounts`\
                  SET `balance` = `balance` -"'+ cash + '"\
                   WHERE `accounts`.`id` ='+ accountId;
 
     [rows] = await connection.execute(sql2);
-    console.log(`${cash} pinigu buvo sekmingai isimti/pervesti`);
+    console.log(`${cash} pinigu buvo sekmingai nuskaityti is saskaitos`);
 
     return true;
 }
@@ -87,6 +118,16 @@ Account.removeMoneyFromAccountByID = async (connection, accountId, cash) => {
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 Account.addMoneyToAccountIdByUserId = async (connection, accountID, cash) => {
+    //VALIDATION
+    if (!Validation.IDisValid(accountID)) {
+
+        return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
+    }
+    if (!Validation.isValidNumber(cash)) {
+
+        return `Parametras turi buti teigiamas sveikasis skaicius!`;
+    }
+    //LOGIC
     //surandam account ir savininko varda
     const sql = 'SELECT \
                     `firstname`,\
@@ -104,7 +145,7 @@ Account.addMoneyToAccountIdByUserId = async (connection, accountID, cash) => {
     const lastName = rows[0].lastname;
     await Account.addMoneyToAccountByID(connection, accountID, cash)
 
-    return `${firstName} ${lastName} sekmingai pridejo ${cash} pinigu i savo saskaita.`;
+    return `I ${firstName} ${lastName} saskaita sekmingai prideta ${cash} pinigu.`;
 }
 
 /**
@@ -115,6 +156,16 @@ Account.addMoneyToAccountIdByUserId = async (connection, accountID, cash) => {
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 Account.cashOutMoneyFromUserAccountById = async (connection, accountID, cash) => {
+    //VALIDATION
+    if (!Validation.IDisValid(accountID)) {
+
+        return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
+    }
+    if (!Validation.isValidNumber(cash)) {
+
+        return `Parametras turi buti teigiamas sveikasis skaicius!`;
+    }
+    //LOGIC
     //surandam account ir savininko varda
     const sql = 'SELECT \
                     `firstname`,\
@@ -132,7 +183,7 @@ Account.cashOutMoneyFromUserAccountById = async (connection, accountID, cash) =>
     const lastName = rows[0].lastname;
     await Account.removeMoneyFromAccountByID(connection, accountID, cash)
 
-    return `${firstName} ${lastName} sekmingai issigrynino ${cash} pinigu is savo saskaitos.`;
+    return `Is ${firstName} ${lastName} saskaitos sekmingai isimta ${cash} pinigu.`;
 }
 /**
  * Atliekam pinigu pervedima is norodytos saskaitos NR(ID) ik kita nurodyta saskaitos NR(ID).
@@ -143,7 +194,20 @@ Account.cashOutMoneyFromUserAccountById = async (connection, accountID, cash) =>
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferToId, cash) => {
+    //VALIDATION
+    if (!Validation.IDisValid(withdrawFromId)) {
 
+        return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
+    }
+    if (!Validation.IDisValid(transferToId)) {
+
+        return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
+    }
+    if (!Validation.isValidNumber(cash)) {
+
+        return `Parametras turi buti teigiamas sveikasis skaicius!`;
+    }
+    //LOGIC
     const removal = await Account.removeMoneyFromAccountByID(connection, withdrawFromId, cash);
 
     if (!removal) {
@@ -152,6 +216,11 @@ Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferTo
 
     }
     const addition = await Account.addMoneyToAccountByID(connection, transferToId, cash);
+    if (!addition) {
+        console.log(`Pinigu pervesti nepavyko, grazinta i pradine saskaita!`);
+        await Account.addMoneyToAccountByID(connection, withdrawFromId, cash);
+        return false
+    }
     return addition
 }
 
@@ -162,6 +231,12 @@ Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferTo
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 Account.deleteAccountById = async (connection, accountId) => {
+    //VALIDATION
+    if (!Validation.IDisValid(accountId)) {
+
+        return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
+    }
+    //LOGIC
     const sql = 'SELECT \
                     `balance`\
                 FROM `accounts`\
