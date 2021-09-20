@@ -5,30 +5,25 @@ const Account = {};
 /**
  * Vartotojo irasymas i duombaze.
  * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
- * @param {number} balance Saskaitos likutis, pagal default 0.
- * @param {userId} userLastname Savininko ID.
+ * @param {number} userId Savininko ID.
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
-Account.create = async (connection, balance, userId) => {
+Account.create = async (connection, userId) => {
     //VALIDATION:
-    if (!Validation.isValidNumber(balance)) {
-
-        return `Parametras turi buti teigiamas sveikasi skaicius!`;
-    }
     if (!Validation.IDisValid(userId)) {
-
         return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
     }
+
     //LOGIC
     //sukuriam account
     const sql = 'INSERT INTO`accounts`\
-                (`id`, `balance`, `owners_id`)\
-             VALUES\
-                (NULL, "' + balance + '", "' + userId + '")';
+                    (`id`, `balance`, `owners_id`)\
+                VALUES\
+                    (NULL, 0 , "' + userId + '")';
 
     const [rows] = await connection.execute(sql);
 
-    return `Saskaita sukurta`
+    return rows.affectedRows === 1 ? `Saskaita sukurta!` : `Saskaitos sukurti nepavyko!`
 };
 
 /**
@@ -38,24 +33,24 @@ Account.create = async (connection, balance, userId) => {
  * @param {number} cash pinigu suma.
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
-Account.addMoneyToAccountByID = async (connection, accountId, cash) => {
+Account.AdditionByAccountId = async (connection, accountId, cash) => {
     //VALIDATION
     if (!Validation.IDisValid(accountId)) {
-
         return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
     }
-    if (!Validation.isValidNumber(cash)) {
 
+    if (!Validation.isValidNumber(cash)) {
         return `Parametras turi buti teigiamas sveikasis skaicius!`;
     }
+
     //LOGIC
     //patikrinam ar egzistuoja toks saskaitos NR:
     let sql = 'SELECT `id`\
-                FROM accounts';
-
+                FROM `accounts`\
+                WHERE `id`=' + accountId;
     let [rows] = await connection.execute(sql);
 
-    if (accountId > rows.length) {
+    if (rows.length === 0) {
         console.log(`Klaida nurodant saskaitos numeri!`);
         return false;
     }
@@ -65,8 +60,15 @@ Account.addMoneyToAccountByID = async (connection, accountId, cash) => {
                   WHERE `accounts`.`id` ='+ accountId;
 
     [rows] = await connection.execute(sql2);
-    console.log(`${cash} pinigu buvo sekmingai prideti i saskaita`);
-    return true;
+    // console.log(`${cash} pinigu buvo sekmingai prideti i saskaita`);
+    // return true;
+    if (!!rows.affectedRows) {
+        console.log(`${cash} pinigu buvo sekmingai prideti i saskaita`);
+    } else {
+        console.log(`pinigu prideti nepavyko!`);
+    }
+
+    return !!rows.affectedRows;
 }
 
 /**
@@ -76,76 +78,78 @@ Account.addMoneyToAccountByID = async (connection, accountId, cash) => {
  * @param {number} cash pinigu suma.
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
-Account.removeMoneyFromAccountByID = async (connection, accountId, cash) => {
+Account.withdrawalFromAccountByID = async (connection, accountId, cash) => {
     //VALIDATION
     if (!Validation.IDisValid(accountId)) {
-
         return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
     }
-    if (!Validation.isValidNumber(cash)) {
 
+    if (!Validation.isValidNumber(cash)) {
         return `Parametras turi buti teigiamas sveikasis skaicius!`;
     }
+
     //LOGIC
     //Patikrinam ar pakanka lesu:
-    const sql = 'SELECT \
-                    `balance`\
-                FROM `accounts`\
-                WHERE `accounts`.`id` =' + accountId;
-
+    const sql = 'SELECT `balance`\
+                 FROM `accounts`\
+                 WHERE `id` =' + accountId;
     let [rows] = await connection.execute(sql);
 
-    if (rows.some(row => row.balance < cash)) {
+    if (rows[0].balance < cash) {
         console.log(`Nepakanka lesu saskaitoje!`);
         return false
     }
+
     //Jei lesu pakanka atlieka pinigu isemima
     const sql2 = 'UPDATE `accounts`\
-                 SET `balance` = `balance` -"'+ cash + '"\
-                  WHERE `accounts`.`id` ='+ accountId;
+                  SET `balance` = `balance` -"'+ cash + '"\
+                  WHERE `id` ='+ accountId;
 
     [rows] = await connection.execute(sql2);
-    console.log(`${cash} pinigu buvo sekmingai nuskaityti is saskaitos`);
 
-    return true;
+    if (!!rows.affectedRows) {
+        console.log(`${cash} pinigu buvo sekmingai nuskaityti is saskaitos`);
+    } else {
+        console.log(`pinigu nuskaityti nepavyko!`);
+    }
+
+    return !!rows.affectedRows;
 }
 
 /**
- * Pridedam pinigu i norodyta vartotojo saskaita pagal jo ID.
+ * Pridedam pinigu i norodyta saskaita pagal jos ID.
  * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
  * @param {number} accountID vartotojo saskaitos NR.
  * @param {number} cash pinigu suma.
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
-Account.addMoneyToAccountIdByUserId = async (connection, accountID, cash) => {
+Account.depositCashToAccount = async (connection, accountID, cash) => {
     //VALIDATION
     if (!Validation.IDisValid(accountID)) {
-
         return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
     }
-    if (!Validation.isValidNumber(cash)) {
 
+    if (!Validation.isValidNumber(cash)) {
         return `Parametras turi buti teigiamas sveikasis skaicius!`;
     }
+
     //LOGIC
     //surandam account ir savininko varda
     const sql = 'SELECT \
                     `firstname`,\
                     `lastname`,\
-                    `accounts`.`balance`,\
+                    `balance`,\
                     `accounts`.`id`as accountId\
-                FROM `users`\
-                LEFT JOIN `accounts`\
+                FROM `accounts`\
+                LEFT JOIN `users`\
                     ON `accounts`.`owners_id` = `users`.`id`\
-                WHERE `users`.`id` =' + accountID;
-
+                WHERE `accounts`.`id` =' + accountID;
     const [rows] = await connection.execute(sql);
 
-    const firstName = rows[0].firstname;
-    const lastName = rows[0].lastname;
-    await Account.addMoneyToAccountByID(connection, accountID, cash)
+    const { firstname, lastname } = rows[0];
+    await Account.AdditionByAccountId(connection, accountID, cash)
 
-    return `I ${firstName} ${lastName} saskaita sekmingai prideta ${cash} pinigu.`;
+    return `I ${firstname} ${lastname} saskaita sekmingai prideta ${cash} pinigu.`;
 }
 
 /**
@@ -155,16 +159,15 @@ Account.addMoneyToAccountIdByUserId = async (connection, accountID, cash) => {
  * @param {number} cash pinigu suma.
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
-Account.cashOutMoneyFromUserAccountById = async (connection, accountID, cash) => {
+Account.cashOutMoney = async (connection, accountID, cash) => {
     //VALIDATION
     if (!Validation.IDisValid(accountID)) {
-
         return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
     }
     if (!Validation.isValidNumber(cash)) {
-
         return `Parametras turi buti teigiamas sveikasis skaicius!`;
     }
+
     //LOGIC
     //surandam account ir savininko varda
     const sql = 'SELECT \
@@ -176,14 +179,12 @@ Account.cashOutMoneyFromUserAccountById = async (connection, accountID, cash) =>
                 LEFT JOIN `accounts`\
                     ON `accounts`.`owners_id` = `users`.`id`\
                 WHERE `users`.`id` =' + accountID;
-
     const [rows] = await connection.execute(sql);
 
-    const firstName = rows[0].firstname;
-    const lastName = rows[0].lastname;
-    await Account.removeMoneyFromAccountByID(connection, accountID, cash)
+    const { firstname, lastname } = rows[0];
+    await Account.withdrawalFromAccountByID(connection, accountID, cash)
 
-    return `Is ${firstName} ${lastName} saskaitos sekmingai isimta ${cash} pinigu.`;
+    return `Is ${firstname} ${lastname} saskaitos sekmingai isimta ${cash} pinigu.`;
 }
 /**
  * Atliekam pinigu pervedima is norodytos saskaitos NR(ID) ik kita nurodyta saskaitos NR(ID).
@@ -196,29 +197,29 @@ Account.cashOutMoneyFromUserAccountById = async (connection, accountID, cash) =>
 Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferToId, cash) => {
     //VALIDATION
     if (!Validation.IDisValid(withdrawFromId)) {
-
         return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
     }
+
     if (!Validation.IDisValid(transferToId)) {
-
         return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
     }
-    if (!Validation.isValidNumber(cash)) {
 
+    if (!Validation.isValidNumber(cash)) {
         return `Parametras turi buti teigiamas sveikasis skaicius!`;
     }
+
     //LOGIC
-    const removal = await Account.removeMoneyFromAccountByID(connection, withdrawFromId, cash);
+    const removal = await Account.withdrawalFromAccountByID(connection, withdrawFromId, cash);
 
     if (!removal) {
         console.log(`Pinigu pervesti negalima!`);
         return false
-
     }
-    const addition = await Account.addMoneyToAccountByID(connection, transferToId, cash);
+
+    const addition = await Account.AdditionByAccountId(connection, transferToId, cash);
     if (!addition) {
         console.log(`Pinigu pervesti nepavyko, grazinta i pradine saskaita!`);
-        await Account.addMoneyToAccountByID(connection, withdrawFromId, cash);
+        await Account.AdditionByAccountId(connection, withdrawFromId, cash);
         return false
     }
     return addition
@@ -233,16 +234,16 @@ Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferTo
 Account.deleteAccountById = async (connection, accountId) => {
     //VALIDATION
     if (!Validation.IDisValid(accountId)) {
-
         return `Parametras ID turi buti teigiamas sveikasi skaicius!`;
     }
+
     //LOGIC
     const sql = 'SELECT \
                     `balance`\
                 FROM `accounts`\
                 WHERE `accounts`.`id` =' + accountId;
-
     let [rows] = await connection.execute(sql);
+
     const balance = rows[0].balance;
 
     if (balance !== 0) {
@@ -254,8 +255,15 @@ Account.deleteAccountById = async (connection, accountId) => {
                         WHERE `accounts`.`id` ='+ accountId;
         [rows] = await connection.execute(sql2);
     }
-    console.log(`Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`)
-    return true
+    // console.log(`Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`)
+    // return true
+    if (!!rows.affectedRows) {
+        console.log(`Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`);
+    } else {
+        console.log(`Saskaitos pasalinti nepavyko!`);
+    }
+
+    return !!rows.affectedRows;
 }
 
 module.exports = Account;
