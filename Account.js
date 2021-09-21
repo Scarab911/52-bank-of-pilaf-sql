@@ -45,14 +45,8 @@ Account.AdditionByAccountId = async (connection, accountId, cash) => {
 
     //LOGIC
     //patikrinam ar egzistuoja toks saskaitos NR:
-    let sql = 'SELECT `id`\
-                FROM `accounts`\
-                WHERE `id`=' + accountId;
-    let [rows] = await connection.execute(sql);
-
-    if (rows.length === 0) {
-        console.log(`Klaida nurodant saskaitos numeri!`);
-        return false;
+    if (! await Account.IsAccountExists(connection, accountId)) {
+        return
     }
     //pridedam pinigus i nurodyta saskaita
     let sql2 = 'UPDATE `accounts`\
@@ -90,14 +84,8 @@ Account.withdrawalFromAccountByID = async (connection, accountId, cash) => {
 
     //LOGIC
     //Patikrinam ar pakanka lesu:
-    const sql = 'SELECT `balance`\
-                 FROM `accounts`\
-                 WHERE `id` =' + accountId;
-    let [rows] = await connection.execute(sql);
-
-    if (rows[0].balance < cash) {
-        console.log(`Nepakanka lesu saskaitoje!`);
-        return false
+    if (! await Account.IsEnoughtMoney(connection, accountId, cash)) {
+        return
     }
 
     //Jei lesu pakanka atlieka pinigu isemima
@@ -209,22 +197,26 @@ Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferTo
     }
 
     //LOGIC
-    const removal = await Account.withdrawalFromAccountByID(connection, withdrawFromId, cash);
-
-    if (!removal) {
-        console.log(`Pinigu pervesti negalima!`);
-        return false
+    //1 patikrinam ar egzistuoja acc
+    if (! await Account.IsAccountExists(connection, withdrawFromId)) {
+        return
     }
+    if (! await Account.IsAccountExists(connection, transferToId)) {
+        return
+    }
+
+    //2 patikrinam ar uztenka lesu
+    if (! await Account.IsEnoughtMoney(connection, withdrawFromId, cash)) {
+        return
+    }
+    //3vykdom iskaityma is saskaitos ir ivedima i saskaita
+    await Account.withdrawalFromAccountByID(connection, withdrawFromId, cash);
 
     const addition = await Account.AdditionByAccountId(connection, transferToId, cash);
-    if (!addition) {
-        console.log(`Pinigu pervesti nepavyko, grazinta i pradine saskaita!`);
-        await Account.AdditionByAccountId(connection, withdrawFromId, cash);
-        return false
-    }
+    console.log(`Pavedimas atliktas sekmingai!`);
     return addition
 }
-
+//PAGALBINIAI METODAI
 /**
  * Pasalinam nurodyta saskaita is sistemos pagal ID.
  * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
@@ -265,5 +257,46 @@ Account.deleteAccountById = async (connection, accountId) => {
 
     return !!rows.affectedRows;
 }
+/**
+ * Tikrinam ar saskaitoje pakanka lesu.
+ * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
+ * @param {number} accountID  Saskaitos ID.
+ * @param {number} cash  Pinigu suma.
+ * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
+ */
+Account.IsEnoughtMoney = async (connection, accountId, cash) => {
+    //Patikrinam ar pakanka lesu:
+    const sql = 'SELECT `balance`\
+                 FROM `accounts`\
+                 WHERE `id` =' + accountId;
+    let [rows] = await connection.execute(sql);
+
+    if (rows[0].balance < cash) {
+        console.log(`Nepakanka lesu saskaitoje!`);
+        return false
+    }
+    return true;
+}
+/**
+ * Tikrinam ar saskaita egzistuoja.
+ * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
+ * @param {number} accountID  Saskaitos ID.
+ * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
+ */
+Account.IsAccountExists = async (connection, accountId) => {
+    //patikrinam ar egzistuoja toks saskaitos NR:
+    let sql = 'SELECT `id`\
+                FROM `accounts`\
+                WHERE `id`=' + accountId;
+    let [rows] = await connection.execute(sql);
+
+    if (rows.length === 0) {
+        console.log(`Klaida nurodant saskaitos numeri!`);
+        return false;
+    }
+    return true;
+}
+
+
 
 module.exports = Account;

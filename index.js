@@ -77,6 +77,9 @@ app.init = async () => {
     console.log('');
     removeUser = await User.delete(conn, 5);
     console.log(removeUser);
+
+    console.log('');
+    await Account.moneyTransferByAccountId(conn, 3, 5, 15);
 }
 
 app.init();
