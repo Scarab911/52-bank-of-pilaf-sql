@@ -7,6 +7,8 @@ db.init = async ({ database, host, user }) => {
 
     await db.createTableUsers(connection);
     await db.createTableAccounts(connection);
+    await db.createTableLogs(connection);
+    await db.createTableOperations(connection);
 
     return connection;
 }
@@ -74,6 +76,37 @@ db.createTableAccounts = async (connection) => {
         return error;
     }
 
+}
+
+db.createTableLogs = async (connection) => {
+    try {
+        const sql = 'CREATE TABLE IF NOT EXISTS `logs` (\
+                        `id` int(10) NOT NULL AUTO_INCREMENT,\
+                        `account_id` INT(10) NOT NULL,\
+                        `owner_id` VARCHAR(20) NOT NULL,\
+                        `operation_id` INT(10) NOT NULL,\
+                        `date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\
+                        PRIMARY KEY(`id`)\
+                    ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci';
+        await connection.execute(sql);
+    } catch (error) {
+        console.log('Nepavyko sukurti Log lenteles');
+        console.log(error);
+        return error;
+    }
+}
+db.createTableOperations = async (connection) => {
+    try {
+        const sql = 'CREATE TABLE `pilafs-bank`.`operations` (\
+                         `id` INT(10) NOT NULL AUTO_INCREMENT ,\
+                           `operation_name` VARCHAR(20) NOT NULL ,\
+                    PRIMARY KEY  (`id`)) ENGINE = InnoDB;';
+        await connection.execute(sql);
+    } catch (error) {
+        console.log('Nepavyko sukurti Operations lenteles');
+        console.log(error);
+        return error;
+    }
 }
 
 //exportuojam faila

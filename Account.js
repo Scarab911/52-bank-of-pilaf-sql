@@ -201,6 +201,7 @@ Account.moneyTransferByAccountId = async (connection, withdrawFromId, transferTo
     if (! await Account.IsAccountExists(connection, withdrawFromId)) {
         return
     }
+
     if (! await Account.IsAccountExists(connection, transferToId)) {
         return
     }
