@@ -1,6 +1,9 @@
 const Account = require('./Account');
 const User = require('./User');
 const db = require('./db');
+const Operation = require('./Operation');
+const Log = require('./Log');
+
 
 
 const app = {}
