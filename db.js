@@ -82,10 +82,11 @@ db.createTableLogs = async (connection) => {
     try {
         const sql = 'CREATE TABLE IF NOT EXISTS `logs` (\
                         `id` int(10) NOT NULL AUTO_INCREMENT,\
+                        `operation_id` INT(10) NOT NULL,\
                         `account_id` INT(10) NOT NULL,\
                         `owner_id` VARCHAR(20) NOT NULL,\
-                        `operation_id` INT(10) NOT NULL,\
-                        `date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\
+                        `date` DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,\
+                        `time` TIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\
                         PRIMARY KEY(`id`)\
                     ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci';
         await connection.execute(sql);
@@ -100,8 +101,19 @@ db.createTableOperations = async (connection) => {
         const sql = 'CREATE TABLE `pilafs-bank`.`operations` (\
                          `id` INT(10) NOT NULL AUTO_INCREMENT ,\
                            `operation_name` VARCHAR(20) NOT NULL ,\
-                    PRIMARY KEY  (`id`)) ENGINE = InnoDB;';
+                    PRIMARY KEY  (`id`)) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci;';
         await connection.execute(sql);
+
+        const sql2 = 'INSERT INTO `operations`\
+                            (`id`, `operation_name`)\
+                    VALUES (NULL, "addition"),\
+                            (NULL, "withdrawal"),\
+                            (NULL, "transfer"),\
+                            (NULL, "create_user"),\
+                            (NULL, "create_account"),\
+                            (NULL, "account_deletion"),\
+                            (NULL, "user_removal")';
+        await connection.execute(sql2)
     } catch (error) {
         console.log('Nepavyko sukurti Operations lenteles');
         console.log(error);
