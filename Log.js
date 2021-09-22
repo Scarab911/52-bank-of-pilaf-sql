@@ -1,3 +1,4 @@
+const helpers = require('./helpers');
 const Log = {}
 
 Log.create = async (connection, operation_id, accountId, userId) => {
@@ -20,11 +21,10 @@ Log.listAll = async (connection) => {
      LEFT JOIN `operations`\
      ON `operations`.`id` = `logs`.`operation_id`';
     const [rows] = await connection.execute(sql);
-    console.log(rows);
     let count = 0;
     let listOfLogs = [];
     for (let { operation_name, lastname, firstname, date, time, account_id } of rows) {
-        listOfLogs.push(`${++count}. Operation - "${operation_name}", user - ${firstname} ${lastname}, account number - ${account_id}\noperation date - ${date} ${time}. Success!`);
+        listOfLogs.push(`${++count}. Operation - "${operation_name}", user - ${firstname} ${lastname}, account number - ${account_id}\noperation date - ${await helpers.formatDate(date)} ${time}. Success!`);
     }
     const response = listOfLogs.join('\n');
     return await response;
