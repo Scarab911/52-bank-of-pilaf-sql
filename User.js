@@ -1,5 +1,6 @@
 const Validation = require('./Validations');
 const Account = require('./Account');
+const Logg = require('./Log');
 
 const User = {};
 /**
@@ -22,18 +23,21 @@ User.create = async (connection, userFirstname, userLastname) => {
     //LOGIC
     //pridedam useri
     const sql = 'INSERT INTO `users`\
-                    (`id`, `firstname`, `lastname`)\
+                    (`id`, `firstname`, `lastname`, `is_active`)\
                 VALUES\
-                    (NULL, "' + userFirstname + '", "' + userLastname + '")';
+                    (NULL, "' + userFirstname + '", "' + userLastname + '","TRUE")';
 
     const [rows] = await connection.execute(sql);
 
-    //susirandam user ID
+    //susirandam user ID:
     const userId = rows.insertId
-    //paduotam ID i account.create=>
 
-    // return  buvo sekmingai irasytas!`;
+    //irasom i logus userio sukurima:
+    await Logg.create(connection, 4, null, userId);
+
+    //paduotam ID i account.create=>
     const response = `Naujas vartotojas ${userFirstname} ${userLastname} ir ${await Account.create(connection, userId)}!`;
+
     return response;
 };
 
@@ -61,7 +65,7 @@ User.delete = async (connection, userId) => {
                     `accounts`.`id`as accountId\
                 FROM `users`\
                 LEFT JOIN `accounts`\
-                    ON `accounts`.`owners_id` = `users`.`id`\
+                    ON `accounts`.`user_id` = `users`.`id`\
                 WHERE `users`.`id` =' + userId;
 
     let [rows] = await connection.execute(sql);
@@ -80,11 +84,18 @@ User.delete = async (connection, userId) => {
         const status = await Account.deleteAccountById(connection, accountId)
     }
 
-    //pasalinam vartotoja:
-    let sql2 = 'DELETE\
-                FROM `users`\
-                WHERE `users`.`id` =' + userId;
+    // //pasalinam(trinam) vartotoja:
+    // let sql2 = 'DELETE\
+    //             FROM `users`\
+    //             WHERE `users`.`id` =' + userId;
+
+    //darom vartotoja nebeaktyvu vartotoja:
+    let sql2 = 'UPDATE `users` SET `is_active` = "FALSE" WHERE `users`.`id` =' + userId;
     [rows] = await connection.execute(sql2);
+
+    //irasom i logus userio pasalinima:
+    await Logg.create(connection, 7, null, userId);
+
     return `Vartotojas ${firstname} ${lastname} sekmingai pasalintas is sistemos!`
 }
 

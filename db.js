@@ -9,6 +9,7 @@ db.init = async ({ database, host, user }) => {
     await db.createTableAccounts(connection);
     await db.createTableLogs(connection);
     await db.createTableOperations(connection);
+    await db.createTableTransactions(connection);
 
     return connection;
 }
@@ -47,6 +48,7 @@ db.createTableUsers = async (connection) => {
                         `id` int(10) NOT NULL AUTO_INCREMENT,\
                         `firstname` char(20) COLLATE utf8_swedish_ci NOT NULL,\
                         `lastname` char(20) COLLATE utf8_swedish_ci NOT NULL,\
+                        `is_active` char(20) COLLATE utf8_swedish_ci NOT NULL,\
                         PRIMARY KEY(`id`)\
                     ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci';
         await connection.execute(sql);
@@ -62,13 +64,14 @@ db.createTableAccounts = async (connection) => {
         const sql = 'CREATE TABLE IF NOT EXISTS `accounts` (\
                         `id` int(10) NOT NULL AUTO_INCREMENT,\
                         `balance` int(10) NOT NULL,\
-                        `owners_id` int(10) NOT NULL,\
+                        `user_id` int(10) NOT NULL,\
+                        `is_active` char(20) COLLATE utf8_swedish_ci NOT NULL,\
                     PRIMARY KEY(`id`),\
-                    KEY `owners_id` (`owners_id`)\
+                    KEY `user_id` (`user_id`)\
                     ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci';
         await connection.execute(sql);
         // uzdedam apsauga nuo istrynimo
-        const sql2 = 'ALTER TABLE `accounts` ADD FOREIGN KEY (`owners_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
+        const sql2 = 'ALTER TABLE `accounts` ADD FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE RESTRICT ON UPDATE RESTRICT;'
         await connection.execute(sql2);
     } catch (error) {
         console.log('Nepavyko sukurti autoriu lenteles');
@@ -82,9 +85,10 @@ db.createTableLogs = async (connection) => {
     try {
         const sql = 'CREATE TABLE IF NOT EXISTS `logs` (\
                         `id` int(10) NOT NULL AUTO_INCREMENT,\
-                        `operation_id` INT(10) NOT NULL,\
-                        `account_id` INT(10) NOT NULL,\
-                        `owner_id` VARCHAR(20) NOT NULL,\
+                        `operation_id` INT(10) NULL,\
+                        `account_id` INT(10) NULL,\
+                        `user_id` INT(20) NULL,\
+                        `transaction_id` INT(10) NULL,\
                         `date` DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,\
                         `time` TIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\
                         PRIMARY KEY(`id`)\
@@ -111,11 +115,27 @@ db.createTableOperations = async (connection) => {
                             (NULL, "transfer"),\
                             (NULL, "create_user"),\
                             (NULL, "create_account"),\
-                            (NULL, "account_deletion"),\
-                            (NULL, "user_removal")';
+                            (NULL, "account_deactivation"),\
+                            (NULL, "user_deactivation")';
         await connection.execute(sql2)
     } catch (error) {
         console.log('Nepavyko sukurti Operations lenteles');
+        console.log(error);
+        return error;
+    }
+}
+
+db.createTableTransactions = async (connection) => {
+    try {
+        const sql = 'CREATE TABLE `pilafs-bank`.`transactions` (\
+                         `id` INT(10) NOT NULL AUTO_INCREMENT ,\
+                           `operation_id` VARCHAR(20) NOT NULL ,\
+                           `account_id` VARCHAR(20) NOT NULL ,\
+                           `quantity` INT(10) NOT NULL ,\
+                    PRIMARY KEY  (`id`)) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci;';
+        await connection.execute(sql);
+    } catch (error) {
+        console.log('Nepavyko sukurti Transactions lenteles');
         console.log(error);
         return error;
     }

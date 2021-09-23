@@ -1,9 +1,10 @@
 const Validation = require('./Validations');
+const Logg = require('./Log');
 
 const Account = {};
 
 /**
- * Vartotojo irasymas i duombaze.
+ * Saskaitos sukurimas.
  * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
  * @param {number} userId Savininko ID.
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
@@ -15,14 +16,26 @@ Account.create = async (connection, userId) => {
     }
 
     //LOGIC
-    //sukuriam account
-    const sql = 'INSERT INTO`accounts`\
-                    (`id`, `balance`, `owners_id`)\
+    //sukuriam account, pries tai tikrinam ar ar acc egzistuoja, aktyvus:
+    const sql = 'SELECT `is_active`\
+                 FROM `users`\
+                 WHERE `id`='+ userId;
+    let [rows] = await connection.execute(sql);
+    if (rows[0].is_active !== 'TRUE') {
+        return `Vartotojas nerastas(neaktyvus) `
+    }
+    const sql2 = 'INSERT INTO`accounts`\
+                    (`id`, `balance`, `user_id`, `is_active`)\
                 VALUES\
-                    (NULL, 0 , "' + userId + '")';
+                    (NULL, 0 , "' + userId + '", "TRUE")';
+    [rows] = await connection.execute(sql2);
 
-    const [rows] = await connection.execute(sql);
+    //surandam koks sukurto accounto id
+    const accountId = rows.insertId;
+    //irasom operacija i logus:
+    await Logg.create(connection, 5, accountId, userId);
 
+    //grazinam rezultata:
     return rows.affectedRows === 1 ? `Saskaita sukurta!` : `Saskaitos sukurti nepavyko!`
 };
 
@@ -54,8 +67,10 @@ Account.AdditionByAccountId = async (connection, accountId, cash) => {
                   WHERE `accounts`.`id` ='+ accountId;
 
     [rows] = await connection.execute(sql2);
-    // console.log(`${cash} pinigu buvo sekmingai prideti i saskaita`);
-    // return true;
+
+    //irasom pinigu pridejima i saskata, i logus:
+    await Logg.create(connection, 1, accountId, null);
+
     if (!!rows.affectedRows) {
         console.log(`${cash} pinigu buvo sekmingai prideti i saskaita`);
     } else {
@@ -95,6 +110,9 @@ Account.withdrawalFromAccountByID = async (connection, accountId, cash) => {
 
     [rows] = await connection.execute(sql2);
 
+    //irasom pinigu pridejima i saskata, i logus:
+    await Logg.create(connection, 2, accountId, null);
+
     if (!!rows.affectedRows) {
         console.log(`${cash} pinigu buvo sekmingai nuskaityti is saskaitos`);
     } else {
@@ -130,7 +148,7 @@ Account.depositCashToAccount = async (connection, accountID, cash) => {
                     `accounts`.`id`as accountId\
                 FROM `accounts`\
                 LEFT JOIN `users`\
-                    ON `accounts`.`owners_id` = `users`.`id`\
+                    ON `accounts`.`user_id` = `users`.`id`\
                 WHERE `accounts`.`id` =' + accountID;
     const [rows] = await connection.execute(sql);
 
@@ -165,7 +183,7 @@ Account.cashOutMoney = async (connection, accountID, cash) => {
                     `accounts`.`id`as accountId\
                 FROM `users`\
                 LEFT JOIN `accounts`\
-                    ON `accounts`.`owners_id` = `users`.`id`\
+                    ON `accounts`.`user_id` = `users`.`id`\
                 WHERE `users`.`id` =' + accountID;
     const [rows] = await connection.execute(sql);
 
@@ -248,8 +266,9 @@ Account.deleteAccountById = async (connection, accountId) => {
                         WHERE `accounts`.`id` ='+ accountId;
         [rows] = await connection.execute(sql2);
     }
-    // console.log(`Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`)
-    // return true
+    //irasom i logus account pasalinima:
+    await Logg.create(connection, 6, accountId, null);
+
     if (!!rows.affectedRows) {
         console.log(`Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`);
     } else {
