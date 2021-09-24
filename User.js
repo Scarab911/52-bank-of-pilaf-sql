@@ -33,7 +33,7 @@ User.create = async (connection, userFirstname, userLastname) => {
     const userId = rows.insertId
 
     //irasom i logus userio sukurima:
-    await Logg.create(connection, 4, null, userId);
+    await Logg.create(connection, 4, null, userId, null);
 
     //paduotam ID i account.create=>
     const response = `Naujas vartotojas ${userFirstname} ${userLastname} ir ${await Account.create(connection, userId)}!`;
@@ -94,7 +94,7 @@ User.delete = async (connection, userId) => {
     [rows] = await connection.execute(sql2);
 
     //irasom i logus userio pasalinima:
-    await Logg.create(connection, 7, null, userId);
+    await Logg.create(connection, 7, null, userId, null);
 
     return `Vartotojas ${firstname} ${lastname} sekmingai pasalintas is sistemos!`
 }

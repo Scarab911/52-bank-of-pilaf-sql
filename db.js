@@ -48,7 +48,7 @@ db.createTableUsers = async (connection) => {
                         `id` int(10) NOT NULL AUTO_INCREMENT,\
                         `firstname` char(20) COLLATE utf8_swedish_ci NOT NULL,\
                         `lastname` char(20) COLLATE utf8_swedish_ci NOT NULL,\
-                        `is_active` char(20) COLLATE utf8_swedish_ci NOT NULL,\
+                        `is_active` char(5) COLLATE utf8_swedish_ci NOT NULL,\
                         PRIMARY KEY(`id`)\
                     ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci';
         await connection.execute(sql);
@@ -65,7 +65,7 @@ db.createTableAccounts = async (connection) => {
                         `id` int(10) NOT NULL AUTO_INCREMENT,\
                         `balance` int(10) NOT NULL,\
                         `user_id` int(10) NOT NULL,\
-                        `is_active` char(20) COLLATE utf8_swedish_ci NOT NULL,\
+                        `is_active` char(5) COLLATE utf8_swedish_ci NOT NULL,\
                     PRIMARY KEY(`id`),\
                     KEY `user_id` (`user_id`)\
                     ) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci';
@@ -82,13 +82,14 @@ db.createTableAccounts = async (connection) => {
 }
 
 db.createTableLogs = async (connection) => {
+    const id = '`id` int(10) NOT NULL AUTO_INCREMENT';
     try {
         const sql = 'CREATE TABLE IF NOT EXISTS `logs` (\
-                        `id` int(10) NOT NULL AUTO_INCREMENT,\
-                        `operation_id` INT(10) NULL,\
+                        '+ id + ',\
+                        `operation_id` INT(2) NULL,\
                         `account_id` INT(10) NULL,\
-                        `user_id` INT(20) NULL,\
-                        `transaction_id` INT(10) NULL,\
+                        `user_id` INT(10) NULL,\
+                        `amount` INT(10) NULL,\
                         `date` DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,\
                         `time` TIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\
                         PRIMARY KEY(`id`)\
@@ -125,21 +126,21 @@ db.createTableOperations = async (connection) => {
     }
 }
 
-db.createTableTransactions = async (connection) => {
-    try {
-        const sql = 'CREATE TABLE `pilafs-bank`.`transactions` (\
-                         `id` INT(10) NOT NULL AUTO_INCREMENT ,\
-                           `operation_id` VARCHAR(20) NOT NULL ,\
-                           `account_id` VARCHAR(20) NOT NULL ,\
-                           `quantity` INT(10) NOT NULL ,\
-                    PRIMARY KEY  (`id`)) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci;';
-        await connection.execute(sql);
-    } catch (error) {
-        console.log('Nepavyko sukurti Transactions lenteles');
-        console.log(error);
-        return error;
-    }
-}
+// db.createTableTransactions = async (connection) => {
+//     try {
+//         const sql = 'CREATE TABLE `pilafs-bank`.`transactions` (\
+//                          `id` INT(10) NOT NULL AUTO_INCREMENT ,\
+//                            `operation_id` VARCHAR(20) NOT NULL ,\
+//                            `account_id` VARCHAR(20) NOT NULL ,\
+//                            `quantity` INT(10) NOT NULL ,\
+//                     PRIMARY KEY  (`id`)) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci;';
+//         await connection.execute(sql);
+//     } catch (error) {
+//         console.log('Nepavyko sukurti Transactions lenteles');
+//         console.log(error);
+//         return error;
+//     }
+// }
 
 //exportuojam faila
 module.exports = db;

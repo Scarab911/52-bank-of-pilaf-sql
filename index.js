@@ -34,11 +34,6 @@ app.init = async () => {
     // console.log(createUser);
     //-----------------------------
     //Kuriam LOg'us
-    // let createLog = await Logg.create(conn, 4, 1, 1);
-    // console.log(createLog);
-
-    // createLog = await Logg.create(conn, 6, 1, 1);
-    // console.log(createLog);
 
     // let listAll = await Logg.listAll(conn);
     // console.log(listAll);
@@ -58,7 +53,7 @@ app.init = async () => {
 
     //isimam pinigu is saskaitos
     console.log('');
-    await Account.withdrawalFromAccountByID(conn, 1, 565);
+    await Account.withdrawalFromAccountById(conn, 1, 565);
 
 
     //vartotojas pagal id ideda pinigu i saskaita
@@ -101,6 +96,9 @@ app.init = async () => {
 
     // let listAllLogs = await Logg.listAll(conn);
     // console.log(listAllLogs);
+    console.log('');
+    const blbla = await Account.AdditionByAccountId(conn, 1, 565);
+    console.log(blbla);
 }
 
 app.init();
