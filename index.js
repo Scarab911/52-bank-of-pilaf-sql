@@ -94,11 +94,11 @@ app.init = async () => {
     // console.log('');
     // await Account.moneyTransferByAccountId(conn, 3, 5, 15);
 
-    // let listAllLogs = await Logg.listAll(conn);
-    // console.log(listAllLogs);
     console.log('');
     const blbla = await Account.AdditionByAccountId(conn, 1, 565);
     console.log(blbla);
+    let listAllLogs = await Logg.listAll(conn);
+    console.log(listAllLogs);
 }
 
 app.init();

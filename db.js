@@ -9,7 +9,7 @@ db.init = async ({ database, host, user }) => {
     await db.createTableAccounts(connection);
     await db.createTableLogs(connection);
     await db.createTableOperations(connection);
-    await db.createTableTransactions(connection);
+    // await db.createTableTransactions(connection);
 
     return connection;
 }

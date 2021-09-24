@@ -75,7 +75,7 @@ User.delete = async (connection, userId) => {
     // const suma = rows.reduce((total, row) => total + row.balance, 0); //patikra sumuojant su REDUCE
     //patikra su metodu SOME:
 
-    if (rows.some(row => row.balance > 0)) {
+    if (rows.some(row => row.balance !== 0)) {
         return `Paskyros istrinti negalima, saskaitose yra pinigu!`
     }
 
