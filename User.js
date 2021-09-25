@@ -33,9 +33,9 @@ User.create = async (connection, userFirstname, userLastname) => {
     const userId = rows.insertId
 
     //irasom i logus userio sukurima:
-    await Logg.create(connection, 4, null, userId, null);
+    await Logg.create(connection, 4, null, userId, null, 'SUCCESS');
 
-    //paduotam ID i account.create=>
+    //paduotam ID i account.create=> kad automatiskai sukurtu jam saskaita
     const response = `Naujas vartotojas ${userFirstname} ${userLastname} ir ${await Account.create(connection, userId)}!`;
 
     return response;
@@ -44,7 +44,7 @@ User.create = async (connection, userFirstname, userLastname) => {
 /**
  * Vartotojo irasymas i duombaze.
  * @param {Object} connection Objektas, su kuriuo kvieciame duombazes manipuliavimo metodus.
- * @param {number} userId Autoriaus vardas.
+ * @param {number} userId Vartotojo ID kuri norime pasalinti.
  * @returns {Promise<string>} Tekstinis pranesimas pranesanti apie atlikta operacija, irasyma i duomenu baze.
  */
 User.delete = async (connection, userId) => {
@@ -54,6 +54,7 @@ User.delete = async (connection, userId) => {
     }
     //tikrinam ar egzistuoja vartotojas sistemoje
     if (!(await User.getUserById(connection, userId)).id) {
+        await Logg.create(connection, 7, null, userId, null, 'FAILURE');
         return `Vartotojas neegzistuoja pasalinti negalima!`
     }
 
@@ -76,12 +77,13 @@ User.delete = async (connection, userId) => {
     //patikra su metodu SOME:
 
     if (rows.some(row => row.balance !== 0)) {
+        await Logg.create(connection, 7, null, userId, null, 'FAILURE');
         return `Paskyros istrinti negalima, saskaitose yra pinigu!`
     }
 
     //trinam saskaitas:
     for (let { accountId } of rows) {
-        const status = await Account.deleteAccountById(connection, accountId)
+        await Account.deleteAccountById(connection, accountId)
     }
 
     // //pasalinam(trinam) vartotoja:
@@ -89,12 +91,14 @@ User.delete = async (connection, userId) => {
     //             FROM `users`\
     //             WHERE `users`.`id` =' + userId;
 
-    //darom vartotoja nebeaktyvu vartotoja:
-    let sql2 = 'UPDATE `users` SET `is_active` = "FALSE" WHERE `users`.`id` =' + userId;
+    //darom vartotoja nebeaktyviu:
+    let sql2 = 'UPDATE `users`\
+                 SET `is_active` = "FALSE"\
+                  WHERE `users`.`id` =' + userId;
     [rows] = await connection.execute(sql2);
 
     //irasom i logus userio pasalinima:
-    await Logg.create(connection, 7, null, userId, null);
+    await Logg.create(connection, 7, null, userId, null, 'SUCCESS');
 
     return `Vartotojas ${firstname} ${lastname} sekmingai pasalintas is sistemos!`
 }

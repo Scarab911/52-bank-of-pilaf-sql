@@ -22,7 +22,9 @@ Account.create = async (connection, userId) => {
                  WHERE `id`='+ userId;
     let [rows] = await connection.execute(sql);
 
-    if (rows[0].is_active !== 'TRUE') {
+    if (rows.length === 0 ||
+        rows[0].is_active !== 'TRUE') {
+        await Logg.create(connection, 5, null, userId, null, 'FAILURE');
         return `Vartotojas nerastas(neaktyvus) `
     }
 
@@ -35,7 +37,7 @@ Account.create = async (connection, userId) => {
     //surandam koks sukurto accounto id
     const accountId = rows.insertId;
     //irasom operacija i logus:
-    await Logg.create(connection, 5, accountId, userId, null);
+    await Logg.create(connection, 5, accountId, userId, null, 'SUCCESS');
 
     //grazinam rezultata:
     return rows.affectedRows === 1 ? `Saskaita sukurta!` : `Saskaitos sukurti nepavyko!`
@@ -61,6 +63,7 @@ Account.AdditionByAccountId = async (connection, accountId, cash) => {
     //LOGIC
     //patikrinam ar egzistuoja/aktyvus toks saskaitos NR:
     if (! await Account.isActiveAccount(connection, accountId)) {
+        await Logg.create(connection, 1, accountId, null, cash, 'FAILURE');
         return `Saskaita neegzistuoja`
     }
 
@@ -72,7 +75,7 @@ Account.AdditionByAccountId = async (connection, accountId, cash) => {
     [rows] = await connection.execute(sql2);
 
     //irasom pinigu pridejima i saskata, i logus:
-    await Logg.create(connection, 1, accountId, null, cash);
+    await Logg.create(connection, 1, accountId, null, cash, 'SUCCESS');
 
     if (!!rows.affectedRows) {
         console.log(`${cash} pinigu buvo sekmingai prideti i saskaita`);
@@ -103,11 +106,13 @@ Account.withdrawalFromAccountById = async (connection, accountId, cash) => {
     //LOGIC
     //patikrinam ar egzistuoja/aktyvus toks saskaitos NR:
     if (! await Account.isActiveAccount(connection, accountId)) {
+        await Logg.create(connection, 2, accountId, null, cash, 'FAILURE');
         return
     }
 
     //Patikrinam ar pakanka lesu:
     if (! await Account.IsEnoughtMoney(connection, accountId, cash)) {
+        await Logg.create(connection, 2, accountId, null, cash, 'FAILURE');
         return
     }
 
@@ -119,11 +124,12 @@ Account.withdrawalFromAccountById = async (connection, accountId, cash) => {
     [rows] = await connection.execute(sql2);
 
     //irasom pinigu pridejima i saskata, i logus:
-    await Logg.create(connection, 2, accountId, null, cash);
 
     if (!!rows.affectedRows) {
+        await Logg.create(connection, 2, accountId, null, cash, 'SUCCESS');
         console.log(`${cash} pinigu buvo sekmingai nuskaityti is saskaitos`);
     } else {
+        await Logg.create(connection, 2, accountId, null, cash, 'FAILURE');
         console.log(`pinigu nuskaityti nepavyko!`);
     }
 
@@ -266,10 +272,17 @@ Account.deleteAccountById = async (connection, accountId) => {
     }
 
     //LOGIC
-    //patikrinam ar egzistuoja/aktyvus toks saskaitos NR:
-    if (! await Account.isActiveAccount(connection, accountId)) {
+    //patikrinam ar egzistuojair ar aktyvus toks saskaitos NR:
+    if (! await Account.IsAccountExists(connection, accountId)) {
+        await Logg.create(connection, 6, accountId, null, null, 'FAILURE');
         return
     }
+
+    if (! await Account.isActiveAccount(connection, accountId)) {
+        await Logg.create(connection, 6, accountId, null, null, 'FAILURE');
+        return
+    }
+
     //tikrinam ar saskaitoj yra lesu
     const sql = 'SELECT \
                     `balance`\
@@ -280,6 +293,7 @@ Account.deleteAccountById = async (connection, accountId) => {
     const balance = rows[0].balance;
 
     if (balance !== 0) {
+        await Logg.create(connection, 6, accountId, null, null, 'FAILURE');
         console.log(`Saskaitos ${accountId} istrinti negalima, joje yra ${balance} pinigu!`);
         return false;
     } else {
@@ -289,7 +303,7 @@ Account.deleteAccountById = async (connection, accountId) => {
         [rows] = await connection.execute(sql2);
     }
     //irasom i logus account pasalinima:
-    await Logg.create(connection, 6, accountId, null, null);
+    await Logg.create(connection, 6, accountId, null, null, 'SUCCESS');
 
     if (!!rows.affectedRows) {
         console.log(`Saskaita numeris - ${accountId} uzdaryta(pasalinta)!`);

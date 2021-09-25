@@ -9,7 +9,6 @@ db.init = async ({ database, host, user }) => {
     await db.createTableAccounts(connection);
     await db.createTableLogs(connection);
     await db.createTableOperations(connection);
-    // await db.createTableTransactions(connection);
 
     return connection;
 }
@@ -90,6 +89,7 @@ db.createTableLogs = async (connection) => {
                         `account_id` INT(10) NULL,\
                         `user_id` INT(10) NULL,\
                         `amount` INT(10) NULL,\
+                        `response` VARCHAR(10) NULL,\
                         `date` DATE NOT NULL DEFAULT CURRENT_TIMESTAMP,\
                         `time` TIME NOT NULL DEFAULT CURRENT_TIMESTAMP,\
                         PRIMARY KEY(`id`)\
@@ -126,21 +126,6 @@ db.createTableOperations = async (connection) => {
     }
 }
 
-// db.createTableTransactions = async (connection) => {
-//     try {
-//         const sql = 'CREATE TABLE `pilafs-bank`.`transactions` (\
-//                          `id` INT(10) NOT NULL AUTO_INCREMENT ,\
-//                            `operation_id` VARCHAR(20) NOT NULL ,\
-//                            `account_id` VARCHAR(20) NOT NULL ,\
-//                            `quantity` INT(10) NOT NULL ,\
-//                     PRIMARY KEY  (`id`)) ENGINE = InnoDB DEFAULT CHARSET = utf8 COLLATE = utf8_swedish_ci;';
-//         await connection.execute(sql);
-//     } catch (error) {
-//         console.log('Nepavyko sukurti Transactions lenteles');
-//         console.log(error);
-//         return error;
-//     }
-// }
 
 //exportuojam faila
 module.exports = db;
