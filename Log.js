@@ -24,13 +24,25 @@ Logg.create = async (connection, operation_id, accountId, userId, amount) => {
     return `Log created`
 }
 Logg.listAll = async (connection) => {
-    sql = 'SELECT *\
-     FROM `logs`\
-     LEFT JOIN `users`\
-     ON `users`.`id` = `logs`.`user_id`\
-     LEFT JOIN `operations`\
-     ON `operations`.`id` = `logs`.`operation_id`';
+
+    //KETURIU LENTELIU APJUNGIMAS:
+    sql = 'SELECT `logs`.`operation_id`,\
+                  `logs`.`account_id`,\
+                  `operations`.`operation_name`,\
+                  `users`.`firstname`,\
+                  `users`.`lastname`,\
+                  `date`,\
+                  `time`\
+            FROM `users`\
+            LEFT JOIN `accounts`\
+                ON `users`.`id`=`accounts`.`user_id`\
+            LEFT JOIN `logs`\
+                ON `accounts`.`id` = `logs`.`account_id`\
+            LEFT JOIN `operations`\
+                ON `operations`.`id` = `logs`.`operation_id`';
+
     const [list] = await connection.execute(sql);
+    console.log(list[6]);
     let count = 0;
     let listOfLogs = [];
     for (let { operation_name, lastname, firstname, date, time, account_id } of list) {
